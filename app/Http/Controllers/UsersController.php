@@ -62,17 +62,18 @@ class UsersController extends Controller
     public function profile()
     {
         $user = Auth::user();
-        $services = \App\Service::all()->toArray();
-        foreach($services as $key => $service) {            
+        $tempS = \App\Service::all()->toArray();
+        $services = [];
+        foreach($tempS as $key => $service) {            
             if($user->hasService($service['slug'])) {
-                $services[$key]['connected'] = true;
-                $services[$key]['settings'] = $user->getService($service['slug'])->getSettings($user);
+                $tempS[$key]['connected'] = true;
+                $tempS[$key]['settings'] = $user->getService($service['slug'])->getSettings($user);
             }
 
             if(!Auth::user()->isSubscriber()) {
-                $services[$key]['hidden'] = in_array($services[$key]['id'], [4,5,'4','5']);
+                $tempS[$key]['hidden'] = in_array($tempS[$key]['id'], [4,5,'4','5']);
             }
-            
+            $services[$service['slug']] = $tempS[$key];
         }
 
         return view('users.profile', compact('user', 'services'));

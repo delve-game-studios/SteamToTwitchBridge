@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Facebook\Facebook;
 
 class FacebookServiceProvider extends ServiceProvider
 {
@@ -23,6 +24,8 @@ class FacebookServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->singleton(Facebook::class, function ($app) {
+            return new Facebook(config('facebook.config'));
+        });
     }
 }
