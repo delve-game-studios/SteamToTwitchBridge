@@ -89,6 +89,7 @@ Route::group(['middleware' => 'auth', 'prefix' => 'services'], function() {
 
 Route::group(['middleware' => 'auth', 'prefix' => ''], function() {
 	Route::get('home', 'UsersController@profile');
+	Route::get('subscribe', 'SubscriptionsController@index');
 	// Route::get('home', [
 	// 	'uses' => 'HomeController@index',
 	// 	'as' => 'home'

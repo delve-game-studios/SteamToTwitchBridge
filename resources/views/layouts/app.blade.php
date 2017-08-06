@@ -12,6 +12,8 @@
 
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    
+    <link href="https://bootswatch.com/slate/bootstrap.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
     <script src="//connect.facebook.net/en_US/sdk.js"></script>
     <script type="text/javascript" class="removeMe">
@@ -116,6 +118,12 @@
         </nav>
 
         @yield('content')
+    </div>
+    <div id="footer">
+        <div class="container">
+            <p class="text-muted credit text-center">
+                &copy; 2017 <a href="#">VF-Websolutions Ltd.</a> Powered by: <a href="http://laravel.com/" alt="Laravel 5.4">Laravel 5.4</a></p>
+        </div>
     </div>
 
     <!-- Scripts -->
