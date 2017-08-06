@@ -74,4 +74,8 @@ class User extends Authenticatable
     public function isAdmin() {
         return $this->role()->isAdmin();
     }
+
+    public function isPremium() {
+        return $this->isSubscriber() && true;
+    }
 }

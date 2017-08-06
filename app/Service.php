@@ -15,9 +15,10 @@ class Service extends Model
     	return $this->belongsToMany('App\User', 'user_services', 'service_id', 'id');
     }
 
-    public function userService() {
+    public function userService(User $user = null) {
+        $user = !!$user ? $user : Auth::user();
         return $this->hasOne('\App\UserService', 'service_id')->where([
-            'user_id' => Auth::user()->id
+            'user_id' => $user->id
         ]);
     }
 

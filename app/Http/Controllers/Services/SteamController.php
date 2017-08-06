@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 
 use \SteamApi as SteamApi;
 use App\UserGame;
+use App\User;
 
 class SteamController extends Controller
 {
@@ -17,7 +18,7 @@ class SteamController extends Controller
     private $service;
     private $slug;
 
-    public function load(App\User $user = null) {
+    public function load(User $user = null) {
         $this->user = !!$user ? $user : Auth::user();
         $this->slug = 'service-steam';
         $this->service = \App\Service::bySlug($this->slug);
@@ -69,7 +70,7 @@ class SteamController extends Controller
 		return redirect()->route('users.profile')->with('info', 'Steam already linked.');
     }
 
-    public function getProfileData(App\User $user = null) {
+    public function getProfileData(User $user = null) {
         $this->load($user);
         $client = new \GuzzleHttp\Client();
 
@@ -80,7 +81,8 @@ class SteamController extends Controller
             $body = json_decode($res->getBody(), true);
             return $body['response']['players'][0];
         }
-        return ['error' => 'Something gone wrong! Please Try later!'];
+
+        return false;
     }
 
     public function updateUserGames() {

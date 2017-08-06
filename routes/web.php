@@ -19,12 +19,6 @@ Auth::routes();
 
 Route::group(['middleware' => 'auth', 'prefix' => 'service'], function() {
 
-	Route::get('twitch/getStreamData', 'Services\TwitchController@getStreamData');
-	
-	Route::post('twitch/setGameAndStatus', 'Services\TwitchController@setGameAndStatus');
-
-	Route::get('steam/getProfileData', 'Services\SteamController@getProfileData');
-
 	/** Auth routes **/
 
 	Route::get('steam/auth', [
@@ -37,19 +31,9 @@ Route::group(['middleware' => 'auth', 'prefix' => 'service'], function() {
 		'as' => 'services.auth.service-twitch'
 	]);
 	
-	Route::get('youtube/auth', [
-		'uses' => 'Services\TwitchController@auth',
-		'as' => 'services.auth.service-youtube'
-	]);
-	
-	Route::get('facebook/auth', [
-		'uses' => 'Services\TwitchController@auth',
+	Route::post('facebook/auth', [
+		'uses' => 'Services\FacebookController@auth',
 		'as' => 'services.auth.service-facebook'
-	]);
-	
-	Route::get('obs/auth', [
-		'uses' => 'Services\TwitchController@auth',
-		'as' => 'services.auth.service-obs'
 	]);
 
 	/** Callbacks routes **/
@@ -63,47 +47,23 @@ Route::group(['middleware' => 'auth', 'prefix' => 'service'], function() {
 		'uses' => 'Services\TwitchController@callback',
 		'as' => 'service.callback-twitch'
 	]);
-	
-	Route::get('youtube/callback', [
-		'uses' => 'Services\YoutubeController@callback',
-		'as' => 'services.callback-youtube'
-	]);
-	
-	Route::get('facebook/callback', [
-		'uses' => 'Services\FacebookController@callback',
-		'as' => 'services.callback-facebook'
-	]);
-	
-	Route::get('obs/callback', [
-		'uses' => 'Services\ObsController@callback',
-		'as' => 'services.callback-obs'
+
+	Route::post('facebook/save', [
+		'uses' => 'Services\FacebookController@save',
+		'as' => 'services.facebook.save'
 	]);
 
-	Route::get('twitch/update', function() {
-		$SteamController = app()->make('App\Http\Controllers\Services\SteamController');
-		$TwitchController = app()->make('App\Http\Controllers\Services\TwitchController');
-		$steamData = $SteamController->callAction('getProfileData', []);
-		$updateUserGames = false;
-
-		if(!empty($steamData['gameextrainfo'])) {
-			if(!$game = \App\UserGame::byAppid($steamData['gameid'])) { // returning Object || null
-				$game = (object)['title' => $steamData['gameextrainfo']]; // if null return object
-				$updateUserGames = true;
-			}
-			$TwitchController->callAction('setGameAndStatus', [['game' => $game->title]]);
-		}
-
-		if($updateUserGames) $SteamController->callAction('updateUserGames', []);
-
-		return redirect('/user/profile')->send();
-	});
-
-	Route::get('steam/updateUserGames', [
-		'uses' => 'Services\SteamController@updateUserGames',
-		'as' => 'services.steam.update-games'
+	Route::post('facebook/destroy', [
+		'uses' => 'Services\FacebookController@destroy',
+		'as' => 'services.facebook.unlink'
 	]);
 
-	Route::get('checkStream', 'ServicesController@updateGameForAllUsers');
+	/** Cron routes **/
+
+	Route::post('service-sequence', [
+		'uses' => 'ServicesController@serviceSequence',
+		'as' => 'services.sequence'
+	]);
 });
 
 Route::group(['middleware' => 'auth', 'prefix' => 'user'], function() {

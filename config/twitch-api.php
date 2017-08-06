@@ -21,7 +21,7 @@ return [
         // 'user_blocks_edit',
         // 'user_blocks_read',
         // 'user_follows_edit',
-        // 'user_read',
+        'user_read',
         // 'user_subscriptions',
         // 'viewing_activity_read'
 

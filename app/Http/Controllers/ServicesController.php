@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Service;
 use App\User;
+use App\UserGame;
+use App\Role;
+use Illuminate\Support\Facades\Auth;
 
 class ServicesController extends Controller
 {
@@ -94,5 +97,63 @@ class ServicesController extends Controller
                 var_dump($steamData);exit;
             }
         }
+    }
+
+    public function serviceSequence(Request $request = null) {
+        if(!!$request && $request->has('users')) {
+            $usersInput = $request->input('users');
+            
+            if(preg_match('@,@', $usersInput)) {
+                $usersInput = explode(',', $usersInput);
+            }
+
+            $users = User::find($usersInput);
+        } else {
+            $users = User::where([
+                'role_id' => 4
+            ])->get()->toArray();
+        }
+
+        foreach($users as $userArray) {
+            $user = User::find($userArray['id']);
+            if($this->checkStreamSequence($user) && $game = $this->checkSteamSequence($user)) {
+                $this->updateStreamSequence($user, $game);
+
+                if($user->isPremium()) {
+                    $this->updateFacebookSequence($user, $game);
+                }
+            }
+        }
+    }
+
+    private function checkStreamSequence(User $user) {
+        $TwitchController = app()->make('App\Http\Controllers\Services\TwitchController');
+        $state = !!$TwitchController->callAction('getStreamData', ['user' => $user]);
+        return $state;
+    }
+
+    private function checkSteamSequence(User $user) {
+        $SteamController = app()->make('App\Http\Controllers\Services\SteamController');
+        $steamData = $SteamController->callAction('getProfileData', ['user' => $user]);
+
+        if(!empty($steamData['gameextrainfo'])) {
+            if($userGame = UserGame::byAppid($steamData['gameid'])) { // returning Object || null
+                return $userGame->title;
+            } else {
+                return $steamData['gameextrainfo']; // if null return object
+            }
+        }
+
+        return false;
+    }
+
+    private function updateStreamSequence(User $user, $game) {
+        $TwitchController = app()->make('App\Http\Controllers\Services\TwitchController');
+        $TwitchController->callAction('setGameAndStatus', [['game' => $game], $user]);
+    }
+
+    private function updateFacebookSequence(User $user, $game) {
+        $FacebookController = app()->make('App\Http\Controllers\Services\FacebookController');
+        $FacebookController->callAction('postMessage', ['user' => $user, 'gamge' => $game, 'redirect' => false]);
     }
 }

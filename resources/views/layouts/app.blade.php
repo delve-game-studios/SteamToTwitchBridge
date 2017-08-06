@@ -12,6 +12,51 @@
 
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+    <script src="//connect.facebook.net/en_US/sdk.js"></script>
+    <script type="text/javascript" class="removeMe">
+        FB.init({
+            appId: '{{ env("FACEBOOK_APP_ID") }}', // replace this with your id
+            status: true,
+            cookie: true,
+            version: '{{ env("FACEBOOK_DEFAULT_GRAPH_VERSION") }}'
+        });
+
+        // attach login click event handler
+        $(document).on('click', "div.service.service-facebook:not(.connected)", function(){
+            FB.login(processLoginClick, {scope:'public_profile,email,user_friends,manage_pages,publish_actions', return_scopes: true});  
+        });
+
+        // function to send uid and access_token back to server
+        // actual permissions granted by user are also included just as an addition
+        function processLoginClick (response) {
+            console.log(response);
+            var data = response.authResponse;
+                data._token = '{{ csrf_token() }}';
+            postData("{{ route('services.auth.service-facebook') }}", data, "post");
+        }
+
+        // function to post any data to server
+        function postData(url, data, method) 
+        {
+            method = method || "post";
+            var form = document.createElement("form");
+            form.setAttribute("method", method);
+            form.setAttribute("action", url);
+            for(var key in data) {
+                if(data.hasOwnProperty(key)) 
+                {
+                    var hiddenField = document.createElement("input");
+                    hiddenField.setAttribute("type", "hidden");
+                    hiddenField.setAttribute("name", key);
+                    hiddenField.setAttribute("value", data[key]);
+                    form.appendChild(hiddenField);
+                 }
+            }
+            document.body.appendChild(form);
+            form.submit();
+        }
+    </script>
 </head>
 <body>
     <div id="app">

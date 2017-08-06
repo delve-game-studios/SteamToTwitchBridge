@@ -18,11 +18,11 @@ class UserGame extends Model
     	return $this->hasOne('App\User', 'id', 'user_id');
     }
 
-    public static function byAppid($appid, $user_id = null) {
-    	if(!$user_id) {
-    		$user_id = Auth::user()->id;
-    	}
+    public static function by($attr = []) {
+        return self::where($attr)->first();
+    }
 
-    	return self::where(['appid' => $appid, 'user_id' => $user_id])->first();
+    public static function byAppid($appid) {
+        return self::by(['appid' => $appid]);
     }
 }

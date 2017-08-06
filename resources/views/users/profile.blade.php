@@ -76,7 +76,11 @@
 										@if(empty($service['hidden']))
 										<div class="col-md-3">
 											@if(!empty($service['connected']))
-											<div class="service {{ $service['slug'] }} connected" data-toggle="modal" data-target="#{{ $service['slug'] }}">
+												@if($service['slug'] == 'service-facebook')
+												<div class="service {{ $service['slug'] }} connected" data-toggle="modal" data-target="#{{ $service['slug'] }}">
+											@else
+												<div class="service {{ $service['slug'] }} connected">
+											@endif
 												<div class="service-icon"></div>
 											</div>
 											@else
@@ -93,7 +97,8 @@
 						</div>
 						@foreach($services as $service)
 							@if(!empty($service['connected']))
-								@include('modals.connection-settings')
+								<?php $modalViewName = sprintf('modals.%s-settings', $service['slug']) ?>
+								@include($modalViewName)
 							@endif
 						@endforeach
 					</div>
@@ -119,64 +124,46 @@
 </script>
 
 @if(empty($services['service-facebook']['hidden']))
-<script type="text/javascript" class="removeMe">
-	$(document).ready(function() {
-	    $.ajaxSetup({ cache: true }); // since I am using jquery as well in my app
-	    $.getScript('//connect.facebook.net/en_US/sdk.js', function () {
-	        // initialize facebook sdk
-	        FB.init({
-	            appId: '{{ env("FACEBOOK_APP_ID") }}', // replace this with your id
-	            status: true,
-	            cookie: true,
-	            version: '{{ env("FACEBOOK_DEFAULT_GRAPH_VERSION") }}'
-	        });
-
-	        // attach login click event handler
-	        $("div.service.service-facebook:not(.connected)").click(function(){
-	            FB.login(processLoginClick, {scope:'public_profile,email,user_friends,manage_pages,publish_actions ', return_scopes: true});  
-	        });
-	    });
-	});
-
-	// function to send uid and access_token back to server
-	// actual permissions granted by user are also included just as an addition
-	function processLoginClick (response) {    
-	    var uid = response.authResponse.userID;
-	    var access_token = response.authResponse.accessToken;
-	    var permissions = response.authResponse.grantedScopes;
-	    var data = { uid:uid, 
-	                 access_token:access_token, 
-	                 _token:'{{ csrf_token() }}', // this is important for Laravel to receive the data
-	                 permissions:permissions 
-	               };        
-	    postData("{{ url('/service/facebook/auth') }}", data, "post");
-	}
-
-	// function to post any data to server
-	function postData(url, data, method) 
-	{
-	    method = method || "post";
-	    var form = document.createElement("form");
-	    form.setAttribute("method", method);
-	    form.setAttribute("action", url);
-	    for(var key in data) {
-	        if(data.hasOwnProperty(key)) 
-	        {
-	            var hiddenField = document.createElement("input");
-	            hiddenField.setAttribute("type", "hidden");
-	            hiddenField.setAttribute("name", key);
-	            hiddenField.setAttribute("value", data[key]);
-	            form.appendChild(hiddenField);
-	         }
-	    }
-	    document.body.appendChild(form);
-	    form.submit();
-	}
-</script>
 @endif
 
 <script type="text/javascript" class="removeMe">
-	// $('.removeMe').remove();
+	$(document).on('click', '.modals .btn-primary.btn-submit', function() {
+		$(this).parents('.modal-content').find('form').submit();
+	});
+	$(document).on('submit', '.modals form', function() {
+		var paramObj = {};
+		var that = $(this);
+		$.each($(this).serializeArray(), function(_, kv) {
+		  paramObj[kv.name] = kv.value;
+		});
+		$.ajax({
+			url: that.attr('action'),
+			data: paramObj,
+			method: 'POST',
+			success: function(response) {
+				$(that).parents('.modal').find('.modal-footer').empty().append($('<div class="col-md-2 col-md-offset-5"><button class="btn btn-info" data-dismiss="modal">Close</button></div>'));
+				$(that).parents('.modal-body').empty().append($('<div class="alert alert-' + response.code + ' keep-me">' + response.message + '</div>'));
+				if(!!response.dump) {
+					console.log(response.dump);
+				}
+				setTimeout(function() {
+					$(that).parents('.modal#service-facebook').find('button.close').click();
+				}, 4000);
+			}
+		});
+		return false;
+	});
+	$(document).on('click', '.modals .btn-danger.btn-unlink', function() {
+		$.post('{{route("services.facebook.unlink")}}', {
+			_token: '{{csrf_token()}}'
+		}, function() {
+			location.reload();
+		});
+	});
+</script>
+
+<script type="text/javascript" class="removeMe">
+	$('.removeMe').remove();
 </script>
 
 @endsection

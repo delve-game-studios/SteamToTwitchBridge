@@ -1,0 +1,8 @@
+Running scheduled command: Closure
+
+                                                                               
+  [Symfony\Component\Debug\Exception\FatalThrowableError]                      
+  Type error: Argument 1 passed to App\Http\Controllers\ServicesController::s  
+  erviceSequence() must be an instance of Illuminate\Http\Request, none given  
+                                                                               
+

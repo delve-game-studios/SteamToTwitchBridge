@@ -12,10 +12,14 @@ use Illuminate\Support\Facades\Auth;
 
 class TwitchController extends Controller
 {
+
+    private $token;
+
     public function callback(Request $request) {
         $code = $request->input('code');
         $response = json_decode(json_encode(TwitchApi::getAccessObject($code)), true);
         TwitchApi::setToken($response['access_token']);
+        $user = TwitchApi::authUser($response['access_token']);
 
         $service = \App\Service::where(['slug' => 'service-twitch'])->first();
 
@@ -32,7 +36,9 @@ class TwitchController extends Controller
         $userService->service_id = $service->id;
         $response['code'] = $code;
         $userService->settings = [
-            'settings' => [],
+            'settings' => [
+                'username' => $user['name']
+            ],
             'access' => $response
         ];
 
@@ -84,9 +90,9 @@ class TwitchController extends Controller
         }
 
         if($service = $user->hasService('service-twitch')) {
-            $userService = $service->userService()->first();
+            $userService = $service->userService($user)->first();
             $this->token = $userService->settings['access']['access_token'];
-            TwitchApi::setToken($this->token);
+            TwitchApi::setToken($userService->settings['access']['access_token']);
         }
     }
 
