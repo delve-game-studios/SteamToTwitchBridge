@@ -123,6 +123,11 @@ class ServicesController extends Controller
                     $this->updateFacebookSequence($user, $game);
                 }
             }
+
+            \App\LastStream::updateMe([
+                'user_id' => $user->id,
+                'last_game' => $game
+            ]);
         }
     }
 

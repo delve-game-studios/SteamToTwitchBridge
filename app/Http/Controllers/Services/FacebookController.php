@@ -111,15 +111,17 @@ class FacebookController extends Controller
 
     public function postMessage(User $user = null, $game = '', $redirect = true) {
     	$this->load($user);
-    	$userService = $this->service->userService($user)->first();
-    	$fbApi = new FacebookApi([]);
-    	$result = $fbApi->post(sprintf('/me/feed', $userService->settings['settings']['page']), [
-    		'message' => sprintf("%s.\n\nPlaying %s", $userService->settings['settings']['message'], $game),
-    		'link' => $userService->settings['settings']['link'],
-		], $userService->settings['settings']['page_access_token']);
+        if(\App\LastStream::isUpdated($user, $game)) {
+        	$userService = $this->service->userService($user)->first();
+        	$fbApi = new FacebookApi([]);
+        	$result = $fbApi->post(sprintf('/me/feed', $userService->settings['settings']['page']), [
+        		'message' => sprintf("%s.\n\nPlaying %s", $userService->settings['settings']['message'], $game),
+        		'link' => $userService->settings['settings']['link'],
+    		], $userService->settings['settings']['page_access_token']);
 
-        if($redirect) {
-    		return redirect()->route('users.profile')->with('success', 'Post submitted to Facebook!');
+            if($redirect) {
+        		return redirect()->route('users.profile')->with('success', 'Post submitted to Facebook!');
+            }
         }
     }
 }

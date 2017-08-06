@@ -81,6 +81,7 @@ class TwitchController extends Controller
 
         $channel = TwitchApi::authChannel();
         $update = TwitchApi::updateChannel($channel['_id'], $data);
+
         return $update;
     }
 
