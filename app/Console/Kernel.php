@@ -29,6 +29,8 @@ class Kernel extends ConsoleKernel
         //          ->hourly();
         $logFile = sprintf('%s/logs/cron_%s.log', storage_path(), date('Ymd'));
         $tempFile = sprintf('%s/logs/cron_%s.temp', storage_path(), date('Ymd'));
+        if(!@file_get_contents($logFile)) file_put_contents($logFile,'');
+        file_put_contents($tempFile,'');
 
         Storage::disk('local')->put('file.txt', 'Contents');
         $schedule->call(function () {
