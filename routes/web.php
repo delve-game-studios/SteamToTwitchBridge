@@ -53,16 +53,21 @@ Route::group(['middleware' => 'auth', 'prefix' => 'service'], function() {
 		'as' => 'services.facebook.save'
 	]);
 
+	/** Unlink routes **/
+
 	Route::post('facebook/destroy', [
 		'uses' => 'Services\FacebookController@destroy',
-		'as' => 'services.facebook.unlink'
+		'as' => 'services.service-facebook.unlink'
 	]);
 
-	/** Cron routes **/
+	Route::post('steam/destroy', [
+		'uses' => 'Services\SteamController@destroy',
+		'as' => 'services.service-steam.unlink'
+	]);
 
-	Route::post('service-sequence', [
-		'uses' => 'ServicesController@serviceSequence',
-		'as' => 'services.sequence'
+	Route::post('twitch/destroy', [
+		'uses' => 'Services\TwitchController@destroy',
+		'as' => 'services.service-twitch.unlink'
 	]);
 });
 
@@ -98,4 +103,13 @@ Route::group(['middleware' => 'auth', 'prefix' => ''], function() {
 
 Route::group(['middleware' => 'auth', 'prefix' => 'admin'], function($router) {
 	Route::get('try/loginAs/{id}', 'UsersController@loginAs');
+});
+
+Route::group(['prefix' => 'cron'], function() {
+	/** Cron routes **/
+
+	Route::get('service-sequence', [
+		'uses' => 'ServicesController@serviceSequence',
+		'as' => 'services.sequence'
+	]);
 });

@@ -9,11 +9,23 @@ use \TwitchApi as TwitchApi;
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 
 class TwitchController extends Controller
 {
 
     private $token;
+    private $settings;
+    private $user;
+    private $service;
+    private $slug;
+
+    public function load(User $user = null) {
+        $this->user = !!$user ? $user : Auth::user();
+        $this->slug = 'service-twitch';
+        $this->service = \App\Service::bySlug($this->slug);
+        $this->settings = $this->service->getSettings();
+    }
 
     public function callback(Request $request) {
         $code = $request->input('code');
@@ -35,16 +47,15 @@ class TwitchController extends Controller
         $userService->user_id = Auth::user()->id;
         $userService->service_id = $service->id;
         $response['code'] = $code;
+        $response['username'] = $user['name'];
         $userService->settings = [
-            'settings' => [
-                'username' => $user['name']
-            ],
+            'settings' => [],
             'access' => $response
         ];
 
         $userService->save();
 
-        return redirect()->route('users.profile');
+        return redirect()->route('users.profile')->with('success', 'Twitch channel linked!');
     }
 
     public function auth()
@@ -74,7 +85,8 @@ class TwitchController extends Controller
         }
 
         $data = [];
-        $data['game'] = $game;
+        $data['game'] = urlencode($game);
+        
         if(!empty($request['status'])) {
             $data['status'] = $request['status'];
         }
@@ -105,5 +117,27 @@ class TwitchController extends Controller
         $status = !!$streamData['stream'];
 
         return ['status' => $status];
+    }
+
+    public function destroy() {
+        $this->load();
+
+        if(!$service = Auth::user()->hasService($this->slug)) {
+            Session::flash('success', 'Twitch has not been linked yet!');
+            return [
+                'status' => 'Error',
+                'code' => 'danger',
+                'message' => 'Twitch has not been linked yet!'
+            ];
+        }
+
+        $service->userService()->first()->delete();
+
+        Session::flash('success', 'Twitch link - Removed!');
+        return [
+            'status' => 'Success',
+            'code' => 'success',
+            'message' => 'Twitch link - Removed! Please reload the page!'
+        ];
     }
 }

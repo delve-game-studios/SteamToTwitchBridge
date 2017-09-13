@@ -91,10 +91,8 @@ class ServicesController extends Controller
         $users = User::all();
         foreach($users as $user) {
             $data = app()->make('App\Http\Controllers\Services\TwitchController')->callAction('isUserStreaming', [$user]);
-            var_dump($data);exit;
             if(!!$data['status']) {
                 $steamData = app()->make('App\Http\Controllers\Services\SteamController')->callAction('getProfileData', [$user]);
-                var_dump($steamData);exit;
             }
         }
     }
@@ -105,6 +103,8 @@ class ServicesController extends Controller
             
             if(preg_match('@,@', $usersInput)) {
                 $usersInput = explode(',', $usersInput);
+            } else {
+                $usersInput = [$usersInput];
             }
 
             $users = User::find($usersInput);
@@ -140,7 +140,6 @@ class ServicesController extends Controller
     private function checkSteamSequence(User $user) {
         $SteamController = app()->make('App\Http\Controllers\Services\SteamController');
         $steamData = $SteamController->callAction('getProfileData', ['user' => $user]);
-
         if(!empty($steamData['gameextrainfo'])) {
             if($userGame = UserGame::byAppid($steamData['gameid'])) { // returning Object || null
                 return $userGame->title;

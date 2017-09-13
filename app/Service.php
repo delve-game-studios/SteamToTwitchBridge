@@ -35,7 +35,15 @@ class Service extends Model
 
         $userService = $this->userService()->first();
 
-        return !$userService == null ? $userService->settings : [];
+        return !$userService == null ? $userService->settings['settings'] : [];
+    }
+
+    public function getAccessSettings(\App\User $user = null) {
+        $user = !!$user ? $user : Auth::user();
+
+        $userService = $this->userService()->first();
+
+        return !$userService == null ? $userService->settings['access'] : [];
     }
 
 

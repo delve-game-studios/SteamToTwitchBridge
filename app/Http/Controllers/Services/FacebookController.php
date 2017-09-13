@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use \Facebook\Facebook as FacebookApi;
+use Illuminate\Support\Facades\Session;
 use App\User;
 
 class FacebookController extends Controller
@@ -19,7 +20,8 @@ class FacebookController extends Controller
         $this->user = !!$user ? $user : Auth::user();
         $this->slug = 'service-facebook';
         $this->service = \App\Service::bySlug($this->slug);
-        $this->settings = $this->service->userService($user)->first()->settings;
+        $this->settings = $this->service->getSettings();
+        $this->settings['access'] = $this->service->getAccessSettings();
     }
 
     public function callback(Request $request) {
@@ -35,11 +37,13 @@ class FacebookController extends Controller
 
 		$userService->user_id = Auth::user()->id;
 		$userService->service_id = $service->id;
+        $accessSettings = $twitch->getAccessSettings();
+        $twitchLink = sprintf('https://www.twitch.tv/%s', $accessSettings['username']);
 		$userService->settings = [
 			'settings' => [
 				'page' => -1,
-				'message' => sprintf("Hi fans, I\'m streaming at the moment.\nWatch my stream at http://www.twitch.tv/%s", $twitch->userService()->first()->settings['settings']['username']),
-				'link' => sprintf('https://www.twitch.tv/%s', $twitch->userService()->first()->settings['settings']['username'])
+				'message' => sprintf("Hi fans, I'm streaming at the moment.\nWatch my stream at %s", $twitchLink),
+				'link' => $twitchLink
 			],
 			'access' => $data
 		];
@@ -93,6 +97,7 @@ class FacebookController extends Controller
     	$this->load();
 
     	if(!$service = Auth::user()->hasService($this->slug)) {
+            Session::flash('error', "Facebook has not been linked yet!");
     		return [
     			'status' => 'Error',
     			'code' => 'danger',
@@ -102,10 +107,11 @@ class FacebookController extends Controller
 
     	$service->userService()->first()->delete();
 
+        Session::flash('success', 'Facebook link - Removed!');
     	return [
     		'status' => 'Success',
     		'code' => 'success',
-    		'message' => 'Facebook link - Removed! Please reload the page!'
+    		'message' => 'Facebook link - Removed!'
     	];
     }
 

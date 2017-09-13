@@ -67,7 +67,7 @@ class User extends Authenticatable
 
     public function isSubscriber() {
         $isSubscriber = !!$this->role()->is(\App\Role::find(4));
-        $isAdmin = $this->isAdmin();
+        $isAdmin = !!$this->isAdmin();
         return $isSubscriber || $isAdmin;
     }
 
@@ -76,6 +76,6 @@ class User extends Authenticatable
     }
 
     public function isPremium() {
-        return $this->isSubscriber() && true;
+        return !!$this->isSubscriber();
     }
 }

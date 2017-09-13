@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use \SteamApi as SteamApi;
 use App\UserGame;
 use App\User;
+use Illuminate\Support\Facades\Session;
 
 class SteamController extends Controller
 {
@@ -109,5 +110,27 @@ class SteamController extends Controller
         }
 
         return ['error' => 'Something gone wrong! Please Try later!'];
+    }
+
+    public function destroy() {
+        $this->load();
+
+        if(!$service = Auth::user()->hasService($this->slug)) {
+            Session::flash('error', 'Steam has not been linked yet!');
+            return [
+                'status' => 'Error',
+                'code' => 'danger',
+                'message' => 'Steam has not been linked yet!'
+            ];
+        }
+
+        $service->userService()->first()->delete();
+        Session::flash('success', 'Steam link - Removed!');
+
+        return [
+            'status' => 'Success',
+            'code' => 'success',
+            'message' => 'Steam link - Removed!'
+        ];
     }
 }

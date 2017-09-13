@@ -72,25 +72,25 @@
 								<div class="panel-heading">Connections</div>
 								<div class="panel-body">
 									<div class="row">
-									@foreach($services as $service)
+									<?php foreach($services as $key => $service) { ?>
 										@if(empty($service['hidden']))
-										<div class="col-md-3">
+										<div class="col-md-3" <?= $key === 'service-steam' ? 'style="margin-left:12.4444444%;"' : ''?>>
 											@if(!empty($service['connected']))
 												@if($service['slug'] == 'service-facebook')
-												<div class="service {{ $service['slug'] }} connected" data-toggle="modal" data-target="#{{ $service['slug'] }}">
+												<div class="service {{ $service['slug'] }} connected {{ !empty($service['settings']) ? 'settings' : '' }}" data-toggle="modal" data-target="#{{ $service['slug'] }}" data-unlink="{{ route(sprintf('services.%s.unlink', $service['slug'])) }}">
 											@else
-												<div class="service {{ $service['slug'] }} connected">
+												<div class="service {{ $service['slug'] }} connected" data-unlink="{{ route(sprintf('services.%s.unlink', $service['slug'])) }}">
 											@endif
-												<div class="service-icon"></div>
-											</div>
+													<div class="service-icon"></div>
+												</div>
 											@else
-											<div class="service {{ $service['slug'] }}" data-slug="{{ $service['slug'] }}">
-												<div class="service-icon"></div>
-											</div>
+												<div class="service {{ $service['slug'] }} <?= !empty($service['disabled']) ? 'disabled' : '' ?>" data-slug="{{ $service['slug'] }}">
+													<div class="service-icon"></div>
+												</div>
 											@endif
 										</div>
 										@endif
-									@endforeach
+									<?php } ?>
 									</div>
 								</div>
 							</div>
@@ -113,7 +113,7 @@
 
 <script type="text/javascript" class="removeMe">
 
-	$(document).on('click', 'div.service:not(.connected):not(.service-facebook)', function() {
+	$(document).on('click', 'div.service:not(.connected):not(.service-facebook):not(.disabled)', function() {
 		var $slug = $(this).data('slug');
 		var services = {};
 		@foreach($services as $i => $service)
@@ -121,15 +121,35 @@
 		@endforeach
 		window.open(services[$slug], '_self');
 	});
+	
 </script>
 
 @if(empty($services['service-facebook']['hidden']))
 @endif
 
 <script type="text/javascript" class="removeMe">
-	$(document).on('click', '.modals .btn-primary.btn-submit', function() {
+	$(document).on('click', '.modals .btn-success.btn-submit', function() {
 		$(this).parents('.modal-content').find('form').submit();
 	});
+	$(document).on('click', 'button.close', '.modal', closeModal);
+	$(document).on('click', 'button.btn-info', '.modal .modal-footer', closeModal);
+
+	function closeModal() {
+		for(var i = 0; i < window.closeModalTimeout.length; i++) {
+			clearTimeout(window.closeModalTimeout[i]);
+		}
+
+		$parent = $(this).parents('.modal')[0];
+		$form_footer = $('.form-footer', $parent);
+		$form_body = $('.form-body', $parent);
+		$flash_footer = $('.flash-footer', $parent);
+		$flash_body = $('.flash-body', $parent);
+		$($form_body).show();
+		$($flash_body).hide();
+		$($form_footer).show();
+		$($flash_footer).hide();
+
+	};
 	$(document).on('submit', '.modals form', function() {
 		var paramObj = {};
 		var that = $(this);
@@ -141,20 +161,44 @@
 			data: paramObj,
 			method: 'POST',
 			success: function(response) {
-				$(that).parents('.modal').find('.modal-footer').empty().append($('<div class="col-md-2 col-md-offset-5"><button class="btn btn-info" data-dismiss="modal">Close</button></div>'));
-				$(that).parents('.modal-body').empty().append($('<div class="alert alert-' + response.code + ' keep-me">' + response.message + '</div>'));
+				$parent = $(that).parents('.modal')[0];
+				$form_footer = $('.form-footer', $parent);
+				$form_body = $('.form-body', $parent);
+				$flash_footer = $('.flash-footer', $parent);
+				$flash_body = $('.flash-body', $parent);
+
+				$($form_body).hide();
+				$('div.alert', $flash_body).attr('class', 'alert alert-' + response.code + ' keep-me');
+				$('div.alert', $flash_body).text(response.message);
+				$($flash_body).show();
+
+				$($form_footer).hide();
+				$($flash_footer).show();
+
 				if(!!response.dump) {
 					console.log(response.dump);
 				}
-				setTimeout(function() {
-					$(that).parents('.modal#service-facebook').find('button.close').click();
-				}, 4000);
+				window.closeModalTimeout.push(setTimeout(function() {
+					$('button.close', $parent).click();
+					$($form_body).show();
+					$($flash_body).hide();
+					$($form_footer).show();
+					$($flash_footer).hide();
+				}, 4000));
 			}
 		});
 		return false;
 	});
 	$(document).on('click', '.modals .btn-danger.btn-unlink', function() {
-		$.post('{{route("services.facebook.unlink")}}', {
+		$.post('{{route("services.service-facebook.unlink")}}', {
+			_token: '{{csrf_token()}}'
+		}, function() {
+			location.reload();
+		});
+	});
+	$(document).on('click', 'div.service.connected:not(.service-facebook)', function() {
+		var $link = $(this).data('unlink');
+		$.post($link, {
 			_token: '{{csrf_token()}}'
 		}, function() {
 			location.reload();
@@ -163,7 +207,7 @@
 </script>
 
 <script type="text/javascript" class="removeMe">
-	$('.removeMe').remove();
+	// $('.removeMe').remove();
 </script>
 
 @endsection

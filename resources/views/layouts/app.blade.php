@@ -17,6 +17,7 @@
     <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
     <script src="//connect.facebook.net/en_US/sdk.js"></script>
     <script type="text/javascript" class="removeMe">
+        var closeModalTimeout = [];
         FB.init({
             appId: '{{ env("FACEBOOK_APP_ID") }}', // replace this with your id
             status: true,
@@ -25,7 +26,7 @@
         });
 
         // attach login click event handler
-        $(document).on('click', "div.service.service-facebook:not(.connected)", function(){
+        $(document).on('click', "div.service.service-facebook:not(.connected):not(.disabled)", function(){
             FB.login(processLoginClick, {scope:'public_profile,email,user_friends,manage_pages,publish_actions', return_scopes: true});  
         });
 

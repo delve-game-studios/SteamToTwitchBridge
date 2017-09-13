@@ -64,17 +64,26 @@ class UsersController extends Controller
         $user = Auth::user();
         $tempS = \App\Service::all()->toArray();
         $services = [];
+        $slugs = array_keys($tempS);
         foreach($tempS as $key => $service) {            
             if($user->hasService($service['slug'])) {
                 $tempS[$key]['connected'] = true;
-                $tempS[$key]['settings'] = $user->getService($service['slug'])->getSettings($user);
+                $userServiceSettings = $user->getService($service['slug'])->getSettings($user);
+                $userAccessSettings  = $user->getService($service['slug'])->getAccessSettings($user);
+                $tempS[$key]['settings'] = $userServiceSettings;
+                $tempS[$key]['settings']['access'] = $userAccessSettings;
+            } else {
+                $tempS[$key]['connected'] = false;
             }
 
             if(!Auth::user()->isSubscriber()) {
                 $tempS[$key]['hidden'] = in_array($tempS[$key]['id'], [4,5,'4','5']);
             }
+
             $services[$service['slug']] = $tempS[$key];
         }
+
+        $services['service-facebook']['disabled'] = (empty($services['service-twitch']['connected']) || empty($services['service-steam']['connected']));
 
         return view('users.profile', compact('user', 'services'));
     }
